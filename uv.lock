@@ -442,6 +442,7 @@ dependencies = [
     { name = "pandas" },
     { name = "scikit-learn" },
     { name = "torch" },
+    { name = "tqdm" },
     { name = "typing" },
     { name = "yfinance" },
 ]
@@ -455,6 +456,7 @@ requires-dist = [
     { name = "pandas", specifier = ">=3.0.2" },
     { name = "scikit-learn", specifier = ">=1.8.0" },
     { name = "torch", specifier = ">=2.11.0", index = "https://download.pytorch.org/whl/cu128" },
+    { name = "tqdm", specifier = ">=4.66.0" },
     { name = "typing", specifier = ">=3.10.0.0" },
     { name = "yfinance", specifier = ">=1.2.0" },
 ]
