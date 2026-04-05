@@ -8,6 +8,7 @@ dependencies = [
     "dataclasses>=0.8",
     "ipykernel>=7.2.0",
     "matplotlib>=3.10.8",
+    "optuna>=4.8.0",
     "pandas>=3.0.2",
     "scikit-learn>=1.8.0",
     "torch>=2.11.0",
