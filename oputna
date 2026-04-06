@@ -1,0 +1,12 @@
+transformer_classifier best params: {
+    'use_vol_features': True, 'atr_ewm_span': 8, 
+    'rv_ewm_span': 20, 
+    'd_model': 128, 
+    'nhead': 4, 
+    'num_layers': 3, 
+    'dropout': 0.2725663036851762, 
+    'dim_feedforward': 512, 
+    'learning_rate': 0.0004875266601576547, 
+    'weight_decay': 7.235352532058836e-05
+}
+transformer_classifier best val dir acc: 0.5904
