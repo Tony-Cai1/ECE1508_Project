@@ -1,0 +1,8 @@
+# Conda environment matching pyproject.toml (Python >=3.12).
+# After creation, install locked dependencies with pip (see README for the PyTorch index).
+name: ece1508-project
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  - pip
