@@ -2,14 +2,17 @@
 
 from __future__ import annotations
 
-import pandas as pd
 import torch
-import yfinance as yf
 
-from data_preparation import DEFAULT_FEATURE_COLUMNS, prepare_datasets
-from evaluate import evaluate_model, plot_predictions, plot_training_history, print_metrics
-from model import LSTMForecaster
-from train import (
+from ece1508.lstm.baseline import (
+    add_macro_trend_features,
+    download_stock_data,
+    explain_tensor_shapes,
+)
+from ece1508.lstm.data_preparation import prepare_datasets
+from ece1508.lstm.evaluate import evaluate_model, plot_predictions, plot_training_history, print_metrics
+from ece1508.lstm.lstm_forecaster import LSTMForecaster
+from ece1508.lstm.train import (
     print_convergence_summary,
     print_training_procedure_summary,
     print_validation_strategy_summary,
@@ -17,69 +20,7 @@ from train import (
 )
 
 
-def download_stock_data(
-    ticker: str = "AAPL",
-    period: str = "5y",
-    interval: str = "1d",
-) -> pd.DataFrame:
-    """
-    Download OHLCV data with yfinance and reshape it for the training pipeline.
-
-    Returned columns:
-    open, high, low, close, volume
-    """
-
-    data = yf.download(ticker, period=period, interval=interval, auto_adjust=False, progress=False)
-    if data.empty:
-        raise ValueError(f"No data returned for ticker={ticker}, period={period}, interval={interval}.")
-
-    # yfinance may return a MultiIndex for columns depending on version and parameters.
-    if isinstance(data.columns, pd.MultiIndex):
-        data.columns = data.columns.get_level_values(0)
-
-    data = data.rename(
-        columns={
-            "Open": "open",
-            "High": "high",
-            "Low": "low",
-            "Close": "close",
-            "Volume": "volume",
-        }
-    )
-
-    cleaned = data[DEFAULT_FEATURE_COLUMNS].copy()
-    cleaned = cleaned.dropna().reset_index(drop=True)
-
-    if len(cleaned) <= 20:
-        raise ValueError("Downloaded dataset is too small for lookback-based training.")
-
-    return cleaned
-
-
-def add_macro_trend_features(df: pd.DataFrame, trend_window: int) -> pd.DataFrame:
-    """Estimate a trailing macro trend and express OHLC prices as deviations from it."""
-
-    transformed = df.copy()
-    transformed["macro_trend"] = transformed["close"].rolling(window=trend_window, min_periods=1).mean()
-    transformed["detrended_open"] = transformed["open"] - transformed["macro_trend"]
-    transformed["detrended_high"] = transformed["high"] - transformed["macro_trend"]
-    transformed["detrended_low"] = transformed["low"] - transformed["macro_trend"]
-    transformed["detrended_close"] = transformed["close"] - transformed["macro_trend"]
-    return transformed
-
-
-def explain_tensor_shapes(lookback: int, num_features: int, batch_size: int) -> None:
-    """Print the expected tensor shapes for beginners."""
-
-    print("Tensor shape guide")
-    print(f"Input batch X shape : ({batch_size}, {lookback}, {num_features})")
-    print("Meaning            : (batch_size, sequence_length, input_size)")
-    print(f"Target batch y shape: ({batch_size}, 1)")
-    print("Model output shape : (batch_size, 1)")
-
-
 def main() -> None:
-    # Clear default configuration requested for the LSTM baseline.
     ticker = "TSLA"
     period = "7d"
     interval = "1m"

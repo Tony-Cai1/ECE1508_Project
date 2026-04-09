@@ -11,7 +11,7 @@ from sklearn.preprocessing import StandardScaler
 from torch import nn
 from torch.utils.data import DataLoader
 
-from train import regression_metrics
+from .train import regression_metrics
 
 
 def directional_metrics(
