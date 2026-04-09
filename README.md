@@ -6,7 +6,7 @@ PyTorch pipeline for downloading OHLCV data with [yfinance](https://github.com/r
 
 ---
 
-## Setup (choose one)
+## Setup
 
 ### Option A — `uv` (recommended, matches `pyproject.toml` + `uv.lock`)
 
