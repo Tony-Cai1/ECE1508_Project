@@ -1,3 +1,10 @@
+[build-system]
+requires = ["hatchling>=1.27.0"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ece1508"]
+
 [project]
 name = "ece1508-project"
 version = "0.1.0"

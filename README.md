@@ -1,7 +1,5 @@
 # ECE1508 Project — Stock forecasting (LSTM baseline)
 
-PyTorch pipeline for downloading OHLCV data with [yfinance](https://github.com/ranaroussi/yfinance), building sliding windows, and training an LSTM forecaster with train/validation/test splits and evaluation plots/metrics.
-
 **Python:** 3.12 or newer (see `requires-python` in `pyproject.toml`).
 
 ---
@@ -16,18 +14,18 @@ Install [uv](https://docs.astral.sh/uv/getting-started/installation/), then from
 uv sync
 ```
 
-This creates `.venv/`, resolves dependencies from the lockfile, and installs **PyTorch with CUDA 12.8** from the index declared in `pyproject.toml` (`pytorch-cu128`).
+This creates `.venv/`, resolves dependencies from the lockfile, installs the **`ece1508` package in editable mode**, and installs **PyTorch with CUDA 12.8** from the index declared in `pyproject.toml` (`pytorch-cu128`).
 
 Run code with:
 
 ```bash
-uv run python demo.py
-uv run python main.py
+uv run python scripts/demo.py
+uv run python scripts/main.py
 ```
 
 ### Option B — `pip` + virtual environment
 
-Create and activate a virtual environment, then install the full dependency tree from the exported lock:
+Create and activate a virtual environment, then install the full dependency tree from the exported lock **and the project itself** (so `import ece1508` works):
 
 **Windows (PowerShell)**
 
@@ -36,6 +34,7 @@ python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install --upgrade pip
 pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cu128
+pip install -e .
 ```
 
 **macOS / Linux**
@@ -45,6 +44,7 @@ python3.12 -m venv .venv
 source .venv/bin/activate
 pip install --upgrade pip
 pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cu128
+pip install -e .
 ```
 
 `requirements.txt` is generated from `uv.lock` (`uv export --no-dev --no-hashes`). It pins `torch` with the `+cu128` build; the extra index is required for that wheel.
@@ -60,6 +60,7 @@ conda env create -f environment.yaml
 conda activate ece1508-project
 pip install --upgrade pip
 pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cu128
+pip install -e .
 ```
 
 ---
@@ -68,11 +69,8 @@ pip install -r requirements.txt --extra-index-url https://download.pytorch.org/w
 
 | What | Command / location |
 |------|-------------------|
-| **Quick demo** (short download, 3 epochs, prints sample I/O and metrics) | `uv run python demo.py` or `python demo.py` inside the activated env |
-| **Full LSTM baseline** (longer intraday run, training curves, saved plots) | `uv run python main.py` |
-| **Notebooks** | `compare_all_models.ipynb`, `compare_lstm_transformer.ipynb`, `percentReturn.ipynb`, `Transformer_Stock_prediction.ipynb` — open in Jupyter/VS Code; use the same interpreter as above (`uv run python -m ipykernel install --user` if needed) |
-
-`main.py` writes checkpoints and PNG plots (ignored by `.gitignore`). `demo.py` saves `demo_lstm_model.pt` and is meant for a fast sanity check.
+| **Quick demo** (short download, 3 epochs, prints sample I/O and metrics) | `uv run python scripts/demo.py` or `python scripts/demo.py` inside the activated env |
+| **Notebooks** | `notebooks/` — `compare_all_models.ipynb`, `compare_lstm_transformer.ipynb`, `percentReturn.ipynb`, `Transformer_Stock_prediction.ipynb`. Select the same interpreter where `ece1508` is installed (`uv run python -m ipykernel install --user` if needed). |
 
 ---
 
@@ -89,14 +87,14 @@ Regenerate `requirements.txt` after you change dependencies and update the lock:
 
 ```bash
 uv lock
-uv export --no-dev --no-hashes --no-annotate -o requirements.txt
+uv export --no-dev --no-hashes --no-annotate --no-emit-project -o requirements.txt
 ```
 
 ---
 
 ## Demo sample input / output
 
-`demo.py` prints:
+`scripts/demo.py` prints:
 
 1. A few rows of price and detrended features.
 2. One training batch tensor shapes `(batch, lookback, features)` and `(batch, 1)`.
@@ -118,9 +116,23 @@ Direction Accuracy: ...
 
 ---
 
-## Project layout (core)
+## Project layout
 
-- `data_preparation.py` — scaling, chronological splits, `DataLoader` construction.
-- `model.py` — LSTM forecaster.
-- `train.py` / `evaluate.py` — training loop, metrics, plotting helpers.
-- `models/` — additional architectures (e.g. transformer, LSTM module variants) used from notebooks or extensions.
+```text
+ECE1508_Project/
+├── pyproject.toml          # dependencies + hatch build (installable package)
+├── uv.lock / requirements.txt
+├── environment.yaml
+├── src/ece1508/            # importable package
+│   ├── data_preparation.py # splits, scaling, DataLoaders
+│   ├── train.py / evaluate.py
+│   ├── lstm_forecaster.py  # LSTM baseline (`LSTMForecaster`)
+│   ├── transformer_model.py # `TimeSeriesTransformer` (notebooks)
+│   ├── baseline.py         # yfinance download + detrend helpers for scripts
+│   └── models/             # LSTM / Transformer heads (regression, classifier, multitask)
+├── scripts/
+│   ├── main.py             # full LSTM baseline CLI
+│   └── demo.py             # short demo run
+├── notebooks/              # experiments and comparisons
+└── notes/                  # ad-hoc logs (e.g. Optuna summaries)
+```

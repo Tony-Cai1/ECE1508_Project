@@ -1,6 +1,8 @@
 """Short end-to-end demo: download data, train a few epochs, print sample metrics.
 
-Run: python demo.py
+From the repository root (with the env activated):
+
+    uv run python scripts/demo.py
 
 Requires network access for yfinance. Outputs are printed to the console; plots are
 optional (disabled by default for a fast, headless-friendly run).
@@ -12,11 +14,11 @@ import pandas as pd
 import torch
 import yfinance as yf
 
-from data_preparation import prepare_datasets
-from evaluate import evaluate_model, print_metrics
-from main import add_macro_trend_features, explain_tensor_shapes
-from model import LSTMForecaster
-from train import train_model
+from ece1508.baseline import add_macro_trend_features, explain_tensor_shapes
+from ece1508.data_preparation import prepare_datasets
+from ece1508.evaluate import evaluate_model, print_metrics
+from ece1508.lstm_forecaster import LSTMForecaster
+from ece1508.train import train_model
 
 
 def demo_download(ticker: str = "AAPL", period: str = "1mo", interval: str = "1h") -> pd.DataFrame:
@@ -40,7 +42,6 @@ def demo_download(ticker: str = "AAPL", period: str = "1mo", interval: str = "1h
     )
     cleaned = data[["open", "high", "low", "close", "volume"]].copy()
     cleaned = cleaned.dropna().reset_index(drop=True)
-    # Chronological split + sliding windows need enough rows (train share must exceed lookback).
     if len(cleaned) < 120:
         raise ValueError(
             f"Downloaded dataset is too small ({len(cleaned)} rows). "
@@ -51,7 +52,6 @@ def demo_download(ticker: str = "AAPL", period: str = "1mo", interval: str = "1h
 
 def main() -> None:
     ticker = "AAPL"
-    # Keep lookback small so 15% validation slice still has enough rows for sliding windows.
     lookback = 16
     trend_window = 12
     hidden_size = 32
