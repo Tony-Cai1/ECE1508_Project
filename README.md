@@ -72,6 +72,28 @@ pip install -e .
 
 ## Demo Script
 
+### Instructions
+
+1. Install the environment and package (from the **repository root**), e.g. with `uv`:
+
+   ```bash
+   uv sync
+   ```
+
+2. Run the demo (still from the repo root). It needs **network access** for live quotes via yfinance:
+
+   ```bash
+   uv run python demo.py
+   ```
+
+   If you use a plain virtualenv after `pip install -e .`, activate it and run:
+
+   ```bash
+   python demo.py
+   ```
+
+### Outputs
+
 `demo.py` prints:
 
 1. A few rows of price and detrended features.
@@ -95,6 +117,15 @@ Transformer — test (price space) Metrics
 
 ## Project layout
 
+**Most important pieces (read these first):**
+
+| Path | Job |
+|------|-----|
+| **`src/ece1508/models/`** | Defines the **model zoo** used in the main comparison: LSTM and Transformer variants (regression, classifier, multitask) with shared training-style APIs. This is the code you import in `from ece1508.models import …`. |
+| **`notebooks/compare_all_models.ipynb`** | **Primary results notebook** — end-to-end experiments (data prep, training, Optuna, metrics, plots). This is where **current reported results** and figures for the project comparison should live. |
+
+Everything else supports baselines, demos, or side experiments.
+
 ```text
 ECE1508_Project/
 ├── demo.py                      # LSTM + Transformer quick demo (repo root)
@@ -110,11 +141,11 @@ ECE1508_Project/
 │   │   └── main.py              # full LSTM baseline CLI
 │   ├── transformer/
 │   │   ├── transformer_model.py # TimeSeriesTransformer
-│   │   ├── percentReturn.ipynb
+│   │   ├── percentReturn.ipynb 
 │   │   └── Transformer_Stock_prediction.ipynb
-│   └── models/                  # Shared model zoo (compare_all_models)
+│   └── models/                  # ★ model zoo for compare_all_models (see table above)
 ├── notebooks/
-│   ├── compare_all_models.ipynb # primary results (see table above)
+│   ├── compare_all_models.ipynb # ★ main results notebook (see table above)
 │   └── compare_lstm_transformer.ipynb
 └── notes/                       # e.g. Optuna log snippets
 ```
