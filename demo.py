@@ -4,7 +4,7 @@ From the repository root (after `uv sync` or `pip install -e .`):
 
     uv run python demo.py
 
-Requires network access for yfinance. Checkpoints are written to the current working directory.
+Requires network access for yfinance. Does not write checkpoint files (in-memory best weights only).
 """
 
 from __future__ import annotations
@@ -118,7 +118,7 @@ def main() -> None:
         epochs=epochs,
         learning_rate=learning_rate,
         patience=5,
-        checkpoint_path="demo_lstm_model.pt",
+        checkpoint_path=None,
     )
     print("=== LSTM: last epoch losses ===")
     print(f"train_loss: {lstm_history['train_loss'][-1]:.6f}")
@@ -153,7 +153,7 @@ def main() -> None:
         epochs=epochs,
         learning_rate=learning_rate,
         patience=5,
-        checkpoint_path="demo_transformer_model.pt",
+        checkpoint_path=None,
     )
     print("\n=== Transformer: last epoch losses ===")
     print(f"train_loss: {tf_history['train_loss'][-1]:.6f}")
@@ -169,8 +169,7 @@ def main() -> None:
     )
     print_metrics(tf_results["metrics"], split_name="Transformer — test (price space)")
 
-    print("\nDemo finished.")
-    print("Checkpoints: demo_lstm_model.pt, demo_transformer_model.pt (overwritten each run).")
+    print("\nDemo finished (no files written).")
 
 
 if __name__ == "__main__":

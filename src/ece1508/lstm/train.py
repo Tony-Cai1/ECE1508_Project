@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import torch
@@ -99,9 +99,14 @@ def train_model(
     epochs: int = 50,
     learning_rate: float = 1e-3,
     patience: int = 10,
-    checkpoint_path: str = "best_lstm_model.pt",
+    checkpoint_path: Optional[str] = "best_lstm_model.pt",
 ) -> Tuple[nn.Module, Dict[str, List[float]]]:
-    """Train the LSTM model and save the best checkpoint by validation loss."""
+    """
+    Train the model and keep the best weights by validation loss.
+
+    If ``checkpoint_path`` is a path string, the best weights are written to disk and
+    reloaded at the end. If ``None``, weights are kept in memory only (no ``.pt`` file).
+    """
 
     criterion = nn.MSELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
@@ -116,7 +121,8 @@ def train_model(
         "val_rmse": [],
     }
 
-    checkpoint = Path(checkpoint_path)
+    checkpoint: Optional[Path] = Path(checkpoint_path) if checkpoint_path is not None else None
+    best_weights: Optional[Dict[str, torch.Tensor]] = None
 
     best_val_loss = float("inf")
     model.to(device)
@@ -142,13 +148,19 @@ def train_model(
 
         if val_metrics["loss"] < best_val_loss:
             best_val_loss = val_metrics["loss"]
-            torch.save(model.state_dict(), checkpoint)
+            if checkpoint is not None:
+                torch.save(model.state_dict(), checkpoint)
+            else:
+                best_weights = {k: v.detach().cpu().clone() for k, v in model.state_dict().items()}
 
         if early_stopper.step(val_metrics["loss"]):
             print(f"Early stopping triggered at epoch {epoch}.")
             break
 
-    model.load_state_dict(torch.load(checkpoint, map_location=device))
+    if checkpoint is not None:
+        model.load_state_dict(torch.load(checkpoint, map_location=device))
+    elif best_weights is not None:
+        model.load_state_dict(best_weights)
     return model, history
 
 

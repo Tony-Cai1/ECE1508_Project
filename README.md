@@ -18,17 +18,6 @@ uv sync
 
 This creates `.venv/`, resolves dependencies from the lockfile, installs the **`ece1508` package in editable mode**, and installs **PyTorch with CUDA 12.8** from the index declared in `pyproject.toml` (`pytorch-cu128`).
 
-Run the **demo** (LSTM + Transformer regressors on the same data):
-
-```bash
-uv run python demo.py
-```
-
-Run the **full LSTM baseline** (longer intraday run, plots):
-
-```bash
-uv run python src/ece1508/lstm/main.py
-```
 
 ### Option B — `pip` + virtual environment
 
@@ -74,13 +63,9 @@ pip install -e .
 
 ### Instructions
 
-1. Install the environment and package (from the **repository root**), e.g. with `uv`:
+1. Install the environment and package, as described in the previous section.
 
-   ```bash
-   uv sync
-   ```
-
-2. Run the demo (still from the repo root). It needs **network access** for live quotes via yfinance:
+2. From the project root, run the demo. It needs network access for live quotes via yfinance:
 
    ```bash
    uv run python demo.py
@@ -93,6 +78,8 @@ pip install -e .
    ```
 
 ### Outputs
+
+The demo does **not** write checkpoint files (`.pt`); it keeps best weights in memory for evaluation only. 
 
 `demo.py` prints:
 
@@ -117,12 +104,12 @@ Transformer — test (price space) Metrics
 
 ## Project layout
 
-**Most important pieces (read these first):**
+**Most important pieces:**
 
 | Path | Job |
 |------|-----|
-| **`src/ece1508/models/`** | Defines the **model zoo** used in the main comparison: LSTM and Transformer variants (regression, classifier, multitask) with shared training-style APIs. This is the code you import in `from ece1508.models import …`. |
-| **`notebooks/compare_all_models.ipynb`** | **Primary results notebook** — end-to-end experiments (data prep, training, Optuna, metrics, plots). This is where **current reported results** and figures for the project comparison should live. |
+| **`src/ece1508/models/`** | Defines all the models used in the main comparison: LSTM and Transformer variants (regression, classifier, multitask) with shared training-style APIs. |
+| **`notebooks/compare_all_models.ipynb`** | **Primary results notebook** — end-to-end experiments (data prep, training, Optuna, metrics, plots). This is where **current reported results** and figures for the project comparison live. |
 
 Everything else supports baselines, demos, or side experiments.
 
@@ -143,10 +130,9 @@ ECE1508_Project/
 │   │   ├── transformer_model.py # TimeSeriesTransformer
 │   │   ├── percentReturn.ipynb 
 │   │   └── Transformer_Stock_prediction.ipynb
-│   └── models/                  # ★ model zoo for compare_all_models (see table above)
+│   └── models/                  # model zoo for compare_all_models 
 ├── notebooks/
-│   ├── compare_all_models.ipynb # ★ main results notebook (see table above)
+│   ├── compare_all_models.ipynb # main results notebook 
 │   └── compare_lstm_transformer.ipynb
-└── notes/                       # e.g. Optuna log snippets
 ```
 
