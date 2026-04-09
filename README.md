@@ -1,5 +1,7 @@
 # ECE1508 Project — Stock forecasting (LSTM baseline)
 
+PyTorch pipeline for downloading OHLCV data with [yfinance](https://github.com/ranaroussi/yfinance), building sliding windows, and training models with train/validation/test splits and evaluation.
+
 **Python:** 3.12 or newer (see `requires-python` in `pyproject.toml`).
 
 ---
@@ -16,11 +18,16 @@ uv sync
 
 This creates `.venv/`, resolves dependencies from the lockfile, installs the **`ece1508` package in editable mode**, and installs **PyTorch with CUDA 12.8** from the index declared in `pyproject.toml` (`pytorch-cu128`).
 
-Run code with:
+Run the **demo** (LSTM + Transformer regressors on the same data):
 
 ```bash
-uv run python scripts/demo.py
-uv run python scripts/main.py
+uv run python demo.py
+```
+
+Run the **full LSTM baseline** (longer intraday run, plots):
+
+```bash
+uv run python src/ece1508/lstm/main.py
 ```
 
 ### Option B — `pip` + virtual environment
@@ -53,8 +60,6 @@ pip install -e .
 
 ### Option C — Conda base + pip
 
-Create a Conda environment with Python 3.12, then use `pip` for the locked ML stack (PyTorch is not duplicated in `environment.yaml` so it stays consistent with `requirements.txt`):
-
 ```bash
 conda env create -f environment.yaml
 conda activate ece1508-project
@@ -65,40 +70,13 @@ pip install -e .
 
 ---
 
-## Usage
+## Demo Script
 
-| What | Command / location |
-|------|-------------------|
-| **Quick demo** (short download, 3 epochs, prints sample I/O and metrics) | `uv run python scripts/demo.py` or `python scripts/demo.py` inside the activated env |
-| **Notebooks** | `notebooks/` — `compare_all_models.ipynb`, `compare_lstm_transformer.ipynb`, `percentReturn.ipynb`, `Transformer_Stock_prediction.ipynb`. Select the same interpreter where `ece1508` is installed (`uv run python -m ipykernel install --user` if needed). |
-
----
-
-## Reproducible dependencies
-
-| File | Role |
-|------|------|
-| `pyproject.toml` | Project metadata and direct dependencies; `tool.uv` pins PyTorch to the CUDA 12.8 wheel index. |
-| `uv.lock` | Full locked resolution for `uv sync`. |
-| `requirements.txt` | Pip-compatible export of the lockfile (regenerate after lock changes; see below). |
-| `environment.yaml` | Conda: Python 3.12 only; install packages with `pip` as in Option C. |
-
-Regenerate `requirements.txt` after you change dependencies and update the lock:
-
-```bash
-uv lock
-uv export --no-dev --no-hashes --no-annotate --no-emit-project -o requirements.txt
-```
-
----
-
-## Demo sample input / output
-
-`scripts/demo.py` prints:
+`demo.py` prints:
 
 1. A few rows of price and detrended features.
 2. One training batch tensor shapes `(batch, lookback, features)` and `(batch, 1)`.
-3. Training loss for the last epoch and test metrics (MSE, MAE, RMSE, directional accuracy).
+3. Training losses for the last epoch and **test metrics** (MSE, MAE, RMSE, directional accuracy) for **both** the LSTM and the `TimeSeriesTransformer` regressors.
 
 Example (values depend on market data at run time):
 
@@ -107,11 +85,10 @@ Example (values depend on market data at run time):
 X batch shape: (16, 16, 5)  (batch, lookback, features)
 y batch shape: (16, 1)  (batch, 1)
 ...
-=== Sample output: test metrics (price space) ===
-MSE : ...
-MAE : ...
-RMSE: ...
-Direction Accuracy: ...
+LSTM — test (price space) Metrics
+...
+Transformer — test (price space) Metrics
+...
 ```
 
 ---
@@ -120,19 +97,25 @@ Direction Accuracy: ...
 
 ```text
 ECE1508_Project/
-├── pyproject.toml          # dependencies + hatch build (installable package)
+├── demo.py                      # LSTM + Transformer quick demo (repo root)
+├── pyproject.toml
 ├── uv.lock / requirements.txt
 ├── environment.yaml
-├── src/ece1508/            # importable package
-│   ├── data_preparation.py # splits, scaling, DataLoaders
-│   ├── train.py / evaluate.py
-│   ├── lstm_forecaster.py  # LSTM baseline (`LSTMForecaster`)
-│   ├── transformer_model.py # `TimeSeriesTransformer` (notebooks)
-│   ├── baseline.py         # yfinance download + detrend helpers for scripts
-│   └── models/             # LSTM / Transformer heads (regression, classifier, multitask)
-├── scripts/
-│   ├── main.py             # full LSTM baseline CLI
-│   └── demo.py             # short demo run
-├── notebooks/              # experiments and comparisons
-└── notes/                  # ad-hoc logs (e.g. Optuna summaries)
+├── src/ece1508/
+│   ├── lstm/
+│   │   ├── data_preparation.py
+│   │   ├── train.py / evaluate.py
+│   │   ├── lstm_forecaster.py   # LSTMForecaster
+│   │   ├── baseline.py          # yfinance + detrend helpers
+│   │   └── main.py              # full LSTM baseline CLI
+│   ├── transformer/
+│   │   ├── transformer_model.py # TimeSeriesTransformer
+│   │   ├── percentReturn.ipynb
+│   │   └── Transformer_Stock_prediction.ipynb
+│   └── models/                  # Shared model zoo (compare_all_models)
+├── notebooks/
+│   ├── compare_all_models.ipynb # primary results (see table above)
+│   └── compare_lstm_transformer.ipynb
+└── notes/                       # e.g. Optuna log snippets
 ```
+

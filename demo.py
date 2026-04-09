@@ -1,11 +1,10 @@
-"""Short end-to-end demo: download data, train a few epochs, print sample metrics.
+"""Short end-to-end demo: one dataset, LSTM + Transformer regressors, sample metrics.
 
-From the repository root (with the env activated):
+From the repository root (after `uv sync` or `pip install -e .`):
 
-    uv run python scripts/demo.py
+    uv run python demo.py
 
-Requires network access for yfinance. Outputs are printed to the console; plots are
-optional (disabled by default for a fast, headless-friendly run).
+Requires network access for yfinance. Checkpoints are written to the current working directory.
 """
 
 from __future__ import annotations
@@ -14,11 +13,12 @@ import pandas as pd
 import torch
 import yfinance as yf
 
-from ece1508.baseline import add_macro_trend_features, explain_tensor_shapes
-from ece1508.data_preparation import prepare_datasets
-from ece1508.evaluate import evaluate_model, print_metrics
-from ece1508.lstm_forecaster import LSTMForecaster
-from ece1508.train import train_model
+from ece1508.lstm.baseline import add_macro_trend_features, explain_tensor_shapes
+from ece1508.lstm.data_preparation import prepare_datasets
+from ece1508.lstm.evaluate import evaluate_model, print_metrics
+from ece1508.lstm.lstm_forecaster import LSTMForecaster
+from ece1508.lstm.train import train_model
+from ece1508.transformer import TimeSeriesTransformer
 
 
 def demo_download(ticker: str = "AAPL", period: str = "1mo", interval: str = "1h") -> pd.DataFrame:
@@ -54,9 +54,6 @@ def main() -> None:
     ticker = "AAPL"
     lookback = 16
     trend_window = 12
-    hidden_size = 32
-    num_layers = 1
-    dropout = 0.1
     batch_size = 16
     learning_rate = 1e-3
     epochs = 3
@@ -103,14 +100,18 @@ def main() -> None:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Device: {device}\n")
 
-    model = LSTMForecaster(
+    test_baseline = prepared["test"].baseline
+    test_previous_close = prepared["test"].previous_close
+
+    # --- LSTM regression (sequence-to-one) ---
+    lstm = LSTMForecaster(
         input_size=num_features,
-        hidden_size=hidden_size,
-        num_layers=num_layers,
-        dropout=dropout,
+        hidden_size=32,
+        num_layers=1,
+        dropout=0.1,
     )
-    model, history = train_model(
-        model=model,
+    lstm, lstm_history = train_model(
+        model=lstm,
         train_loader=dataloaders["train"],
         val_loader=dataloaders["val"],
         device=device,
@@ -119,25 +120,57 @@ def main() -> None:
         patience=5,
         checkpoint_path="demo_lstm_model.pt",
     )
+    print("=== LSTM: last epoch losses ===")
+    print(f"train_loss: {lstm_history['train_loss'][-1]:.6f}")
+    print(f"val_loss:   {lstm_history['val_loss'][-1]:.6f}\n")
 
-    print("=== Sample output: last epoch losses ===")
-    print(f"train_loss: {history['train_loss'][-1]:.6f}")
-    print(f"val_loss:   {history['val_loss'][-1]:.6f}")
-    print()
-
-    test_baseline = prepared["test"].baseline
-    test_previous_close = prepared["test"].previous_close
-    test_results = evaluate_model(
-        model=model,
+    lstm_results = evaluate_model(
+        model=lstm,
         dataloader=dataloaders["test"],
         device=device,
         target_scaler=target_scaler,
         reconstruction_baseline=test_baseline,
         previous_close=test_previous_close,
     )
-    print("=== Sample output: test metrics (price space) ===")
-    print_metrics(test_results["metrics"], split_name="Demo test")
-    print("\nDemo finished. Checkpoint saved as demo_lstm_model.pt (overwritten each run).")
+    print_metrics(lstm_results["metrics"], split_name="LSTM — test (price space)")
+
+    # --- Transformer regression (same tensors; horizon=1 matches y shape) ---
+    transformer = TimeSeriesTransformer(
+        input_dim=num_features,
+        d_model=48,
+        nhead=4,
+        num_layers=2,
+        dropout=0.1,
+        horizon=1,
+        dim_feedforward=128,
+        max_pos_len=max(lookback * 2, 64),
+    )
+    transformer, tf_history = train_model(
+        model=transformer,
+        train_loader=dataloaders["train"],
+        val_loader=dataloaders["val"],
+        device=device,
+        epochs=epochs,
+        learning_rate=learning_rate,
+        patience=5,
+        checkpoint_path="demo_transformer_model.pt",
+    )
+    print("\n=== Transformer: last epoch losses ===")
+    print(f"train_loss: {tf_history['train_loss'][-1]:.6f}")
+    print(f"val_loss:   {tf_history['val_loss'][-1]:.6f}\n")
+
+    tf_results = evaluate_model(
+        model=transformer,
+        dataloader=dataloaders["test"],
+        device=device,
+        target_scaler=target_scaler,
+        reconstruction_baseline=test_baseline,
+        previous_close=test_previous_close,
+    )
+    print_metrics(tf_results["metrics"], split_name="Transformer — test (price space)")
+
+    print("\nDemo finished.")
+    print("Checkpoints: demo_lstm_model.pt, demo_transformer_model.pt (overwritten each run).")
 
 
 if __name__ == "__main__":

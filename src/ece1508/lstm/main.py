@@ -4,15 +4,15 @@ from __future__ import annotations
 
 import torch
 
-from ece1508.baseline import (
+from ece1508.lstm.baseline import (
     add_macro_trend_features,
     download_stock_data,
     explain_tensor_shapes,
 )
-from ece1508.data_preparation import prepare_datasets
-from ece1508.evaluate import evaluate_model, plot_predictions, plot_training_history, print_metrics
-from ece1508.lstm_forecaster import LSTMForecaster
-from ece1508.train import (
+from ece1508.lstm.data_preparation import prepare_datasets
+from ece1508.lstm.evaluate import evaluate_model, plot_predictions, plot_training_history, print_metrics
+from ece1508.lstm.lstm_forecaster import LSTMForecaster
+from ece1508.lstm.train import (
     print_convergence_summary,
     print_training_procedure_summary,
     print_validation_strategy_summary,
