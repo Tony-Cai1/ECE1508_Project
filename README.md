@@ -1,4 +1,4 @@
-# ECE1508 Project — Stock forecasting (LSTM baseline)
+# ECE1508 Project — Stock forecasting
 
 PyTorch pipeline for downloading OHLCV data with [yfinance](https://github.com/ranaroussi/yfinance), building sliding windows, and training models with train/validation/test splits and evaluation.
 
